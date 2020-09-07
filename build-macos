@@ -1,0 +1,40 @@
+#!/bin/sh
+
+export CC=cc
+export CXX=c++
+
+ROOT=/ 
+USR_ROOT=${ROOT}usr/local
+GNUSTEP_ROOT=${USR_ROOT}/opt/GNUstep
+export GNUSTEP_CONFIG_FILE=${GNUSTEP_ROOT}/etc/GNUstep.conf
+export GNUSTEP_INSTALL_LD_SO_CONF=no
+
+echo "Installation directory is $GNUSTEP_ROOT"
+echo "Building GNUstep for Darwin"
+echo ""
+
+export PKG_CONFIG_PATH=${USR_ROOT}/local/lib/pkgconfig:${USR_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH}
+export LDFLAGS+=-L/usr/local/Cellar/gcc/10.2.0/lib/gcc/10/
+
+# Build make
+echo "======== Build make"
+cd tools-make
+./configure --with-library-combo=gnu-gnu-gnu --with-layout=gnustep --prefix=${GNUSTEP_ROOT}
+make install messages=yes
+source ${GNUSTEP_ROOT}/System/Library/Makefiles/GNUstep.sh
+
+# Build base
+echo "======== Build base"
+cd ../libs-base
+# make GNUSTEP_INSTALLATION_DOMAIN=SYSTEM distclean
+export CFLAGS+=-I/usr/local/include
+export LDFLAGS="-L/usr/local/opt/bison/lib -shared-libgcc"
+./configure --with-installation-domain=SYSTEM --disable-icu
+make GNUSTEP_INSTALLATION_DOMAIN=SYSTEM debug=yes install messages=no -j4
+
+
+
+echo ""
+echo "Done."
+
+exit 0
